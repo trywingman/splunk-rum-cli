@@ -14,14 +14,14 @@
  * limitations under the License.
 */
 
-import { cleanupTemporaryFiles, readdirRecursive } from '../filesystem';
+import { cleanupTemporaryFiles, readdirRecursive } from '../utils/filesystem';
 import {
   info,
   isJsFilePath,
   isJsMapFilePath,
   warn
 } from './utils';
-import { throwAsUserFriendlyErrnoException } from '../userFriendlyErrors';
+import { throwAsUserFriendlyErrnoException } from '../utils/userFriendlyErrors';
 import { discoverJsMapFilePath } from './discoverJsMapFilePath';
 import { computeSourceMapId } from './computeSourceMapId';
 import { injectFile } from './injectFile';
