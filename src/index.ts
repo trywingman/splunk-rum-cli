@@ -26,10 +26,17 @@ import { sourcefilesCommand } from './commands/sourcefiles';
 
 const program = new Command();
 
+const helpDescription =
+`A CLI tool for uploading and displaying of Android, iOS, and Browser symbolication files to and from Splunk O11y Cloud.
+
+For each respective command listed below, please run 'o11y-dem-cli <command>' for an overview of available subcommands and options
+`;
+
 program
   .version('1.0.0')
-  .description('A CLI Tool to allow uploading of Android, iOS, and Browser symbolication files to Splunk O11y Cloud');
-
+  .description(helpDescription)
+  .usage('[ios|android|sourcemaps] [sub-command] [options]');
+  
 program.addCommand(iosCommand);
 program.addCommand(androidCommand);
 program.addCommand(sourcemapsCommand);
