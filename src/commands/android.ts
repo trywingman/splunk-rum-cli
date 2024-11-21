@@ -25,6 +25,7 @@ import {
 } from '../utils/androidInputValidations';
 import { UserFriendlyError } from '../utils/userFriendlyErrors';
 import { createLogger, LogLevel } from '../utils/logger';
+import axios from 'axios';
 
 export const androidCommand = new Command('android');
 
@@ -41,6 +42,11 @@ This command uploads the provided file using the packaged AndroidManifest.xml pr
 You need to provide the path to the mapping file, and the path to the AndroidManifest.xml file.
 The application ID, version code, and optional UUID will be extracted from the manifest file. 
 This command is recommended if you want to automate the upload process without manually specifying the application details.
+`;
+
+const listProguardDescription = `
+This command retrieves and lists the metadata of the uploaded ProGuard mapping files.
+By default, it will return the last 100 ProGuard mapping files uploaded, sorted in reverse chronological order based on the upload timestamp.
 `;
 
 interface UploadAndroidOptions {
@@ -172,5 +178,31 @@ androidCommand
         logger.error(err);
       }
       throw err; 
+    }
+  });
+
+androidCommand
+  .command('list')
+  .summary(`Retrieves list of metadata of all uploaded Proguard/R8 mapping files`)
+  .showHelpAfterError(true)
+  .description(listProguardDescription)
+  .option('--debug', 
+    'Enable debug logs')
+  .action(async (options) => {
+    const logger = createLogger(options.debug ? LogLevel.DEBUG : LogLevel.INFO);
+
+    const url = 'https://whateverTheEndpointURLis/v1/proguard'; // Replace with the actual endpoint for fetching metadata
+
+    try {
+      logger.info(`Fetching mapping file data`);
+
+      const response = await axios.get(url); // May need to add headers/authentication, query parameters etc once integrating with backend
+
+      // Logging raw data, slight formatting with json stringify, but can format down the line once we know how it will look returned from the backend
+      logger.info('Raw Response Data:', JSON.stringify(response.data, null, 2)); 
+    } catch (error) {
+      logger.error('Failed to fetch the list of uploaded files:');
+      logger.debug(error);
+      throw error;
     }
   });
