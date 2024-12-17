@@ -15,9 +15,10 @@
 */
 
 import { Command } from 'commander';
-import { runSourcemapInject, SourceMapInjectOptions } from '../sourcemaps';
+import { runSourcemapInject, runSourcemapUpload, SourceMapInjectOptions } from '../sourcemaps';
 import { UserFriendlyError } from '../utils/userFriendlyErrors';
 import { createLogger, LogLevel } from '../utils/logger';
+import { createSpinner } from '../utils/spinner';
 
 export const sourcemapsCommand = new Command('sourcemaps');
 
@@ -44,10 +45,22 @@ After running this command successfully:
  - deploy the injected JavaScript files to your production environment
 `;
 
+const uploadDescription =
+`Uploads source maps to Splunk Observability Cloud.
+
+This command will recursively search the provided path for source map files (.js.map, .cjs.map, .mjs.map)
+and upload them.  You can specify optional metadata (application name, version) that will be attached to
+each uploaded source map.
+
+This command should be run after "sourcemaps inject".  Once the injected JavaScript files have been deployed
+to your environment, any reported stack traces will be automatically symbolicated using these
+uploaded source maps.
+`;
+
 sourcemapsCommand
   .command('inject')
   .showHelpAfterError(true)
-  .usage('--directory path/to/dist')
+  .usage('--directory <path>')
   .summary(`Inject a code snippet into your JavaScript bundles to allow for automatic source mapping of errors`)
   .description(injectDescription)
   .requiredOption(
@@ -82,13 +95,61 @@ sourcemapsCommand
 
 sourcemapsCommand
   .command('upload')
-  .requiredOption('--app-name <appName>', 'Application name')
-  .requiredOption('--app-version <appVersion>', 'Application version')
-  .requiredOption('--directory <directory>', 'Path to the directory containing source maps')
-  .description('Upload source maps')
-  .action((options) => {
-    console.log(`Uploading source maps:
-      App Name: ${options.appName}
-      App Version: ${options.appVersion}
-      Directory: ${options.directory}`);
-  });
+  .showHelpAfterError(true)
+  .usage('--directory <path> --realm <value> --token <value>')
+  .summary(`Upload source maps to Splunk Observability Cloud`)
+  .description(uploadDescription)
+  .requiredOption(
+    '--directory <path>',
+    'Path to the directory containing source maps for your production JavaScript bundles'
+  )
+  .requiredOption(
+    '--realm <value>',
+    'Realm for your organization (example: us0).  Can also be set using the environment variable O11Y_REALM',
+    process.env.O11Y_REALM
+  )
+  .requiredOption(
+    '--token <value>',
+    'API access token.  Can also be set using the environment variable O11Y_TOKEN',
+    process.env.O11Y_TOKEN
+  )
+  .option(
+    '--app-name <value>',
+    'The application name used in your agent configuration'
+  )
+  .option(
+    '--app-version <value>',
+    'The application version used in your agent configuration'
+  )
+  .option(
+    '--debug',
+    'Enable debug logs'
+  )
+  .action(
+    async (options: SourcemapsUploadCliOptions) => {
+      const logger = createLogger(options.debug ? LogLevel.DEBUG : LogLevel.INFO);
+      const spinner = createSpinner();
+      try {
+        await runSourcemapUpload(options, { logger, spinner });
+      } catch (e) {
+        if (e instanceof UserFriendlyError) {
+          logger.debug(e.originalError);
+          logger.error(e.message);
+        } else {
+          logger.error('Exiting due to an unexpected error:');
+          logger.error(e);
+        }
+        sourcemapsCommand.error('');
+      }
+    }
+  );
+
+interface SourcemapsUploadCliOptions {
+  directory: string;
+  realm: string;
+  token: string;
+  appName?: string;
+  appVersion?: string;
+  dryRun?: boolean;
+  debug?: boolean;
+}

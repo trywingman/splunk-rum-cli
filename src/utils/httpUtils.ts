@@ -26,6 +26,7 @@ interface FileUpload {
 interface UploadOptions {
   url: string;
   file: FileUpload;
+  method?: 'PUT' | 'POST';
   parameters: { [key: string]: string | number }; 
   onProgress?: (progressInfo: { progress: number; loaded: number; total: number }) => void;
 }
@@ -64,5 +65,34 @@ export const uploadFile = async ({ url, file, parameters, onProgress }: UploadOp
         onProgress({ progress, loaded, total });
       }    
     },
+  });
+};
+
+// temporary function
+// mockUploadFile can be used when the endpoint for the real uploadFile call is not ready
+
+export const mockUploadFile = async ({ file, onProgress }: UploadOptions): Promise<void> => {
+  const fileSizeInBytes = fs.statSync(file.filePath).size;
+
+  return new Promise((resolve) => {
+    const mbps = 25;
+    const bytes_to_megabits = (bytes: number) => bytes * 8 / 1000 / 1000;
+
+    // simulate axios progress events
+    const tick = 50;
+    let msElapsed = 0;
+    const intervalId = setInterval(() => {
+      msElapsed += tick;
+      const loaded = Math.floor((msElapsed / 1000) * mbps / 8 * 1024 * 1024);
+      const total = fileSizeInBytes;
+      const progress = (loaded / total) * 100;
+      onProgress?.({ loaded, total, progress });
+    }, tick);
+
+    // simulate axios completion
+    setTimeout(() => {
+      clearInterval(intervalId);
+      resolve();
+    }, bytes_to_megabits(fileSizeInBytes) / mbps * 1000);
   });
 };
