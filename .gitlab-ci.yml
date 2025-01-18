@@ -1,0 +1,29 @@
+default:
+  image: 'cimg/node:20.18.0'
+
+stages:
+  - install
+  - build
+  - lint
+  - test
+
+install_dependencies:
+  stage: install
+  script:
+    - npm ci
+
+build:
+  stage: build
+  script:
+    - npm run build
+
+lint:
+  stage: lint
+  script:
+    - npm run lint
+
+unit_tests:
+  stage: test
+  script:
+    - npm run test:unit
+
