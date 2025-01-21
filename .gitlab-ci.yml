@@ -1,6 +1,13 @@
 default:
   image: 'cimg/node:20.18.0'
 
+cache:
+  key:
+      files:
+          - package-lock.json
+  paths:
+      - './node_modules'
+
 stages:
   - install
   - build
