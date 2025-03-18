@@ -45,7 +45,7 @@ const generateURL = (type: 'upload' | 'list', realm: string, appId: string, vers
   }
 
   if (type === 'list') {
-    return `${baseUrl}/app/${appId}/metadatas`;
+    return `${baseUrl}/${appId}/metadatas`;
   }
 
   throw new Error('Invalid URL type specified.');
