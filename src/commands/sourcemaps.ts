@@ -23,6 +23,10 @@ import { COMMON_ERROR_MESSAGES } from '../utils/inputValidations';
 
 export const sourcemapsCommand = new Command('sourcemaps');
 
+const shortDescription = 'Prepares JavaScript files to support error symbolication and uploads JavaScript source maps';
+
+const detailedHelp = `For each respective command listed below under 'Commands', please run 'o11y-dem-cli sourcemaps <command> --help' for an overview of its usage and options`;
+
 const injectDescription =
 `Inject a code snippet into your JavaScript bundles to enable automatic source mapping of your application's JavaScript errors.
 
@@ -58,13 +62,15 @@ to your environment, any reported stack traces will be automatically symbolicate
 uploaded source maps.
 `;
 
-const helpDescription = `Prepares JavaScript files to support error symbolication and uploads JavaScript source maps
-
-For each respective command listed below under 'Commands', please run 'o11y-dem-cli sourcemaps <command> --help' for an overview of its usage and options
-`;
-
 sourcemapsCommand
-  .description(helpDescription);
+  .description(shortDescription)
+  .usage('[command] [options]');
+
+sourcemapsCommand.configureHelp({
+  commandDescription: (cmd) => {
+    return `${cmd.description()}\n\n${detailedHelp}`;
+  }
+});
 
 sourcemapsCommand
   .command('inject')

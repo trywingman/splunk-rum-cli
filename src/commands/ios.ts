@@ -46,15 +46,14 @@ const TOKEN_HEADER = 'X-SF-Token';
 const program = new Command();
 export const iOSCommand = program.command('ios');
 
+const shortDescription = 'Upload and list iOS symbolication files (dSYMs)';
+
+const detailedHelp = `For each respective command listed below under 'Commands', please run 'o11y-dem-cli ios <command> --help' for an overview of its usage and options`;
+
 const iOSUploadDescription = `This subcommand uploads dSYMs provided as either a zip file, or a dSYM or dSYMs directory.`;
 
 const listdSYMsDescription = `This subcommand retrieves and shows a list of the uploaded dSYMs.
 By default, it returns the last 100 dSYMs uploaded, sorted in reverse chronological order based on the upload timestamp.
-`;
-
-const helpDescription = `Upload and list iOS symbolication files (dSYMs)
-
-For each respective command listed below under 'Commands', please run 'o11y-dem-cli ios <command> --help' for an overview of its usage and options
 `;
 
 const generateUrl = ({
@@ -72,11 +71,17 @@ const generateUrl = ({
 };
 
 iOSCommand
-  .description(helpDescription);
+  .description(shortDescription)
+  .usage('[command] [options]');
+
+iOSCommand.configureHelp({
+  commandDescription: (cmd) => {
+    return `${cmd.description()}\n\n${detailedHelp}`;
+  }
+});
 
 iOSCommand
   .command('upload')
-  .helpOption(false)
   .showHelpAfterError(true)
   .usage('--path <dSYMs directory or zip file>')
   .description(iOSUploadDescription)
@@ -191,7 +196,6 @@ iOSCommand
 
 iOSCommand
   .command('list')
-  .helpOption(false)
   .summary('Retrieves list of metadata of all uploaded dSYM files')
   .showHelpAfterError(true)
   .description(listdSYMsDescription)
