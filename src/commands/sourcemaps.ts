@@ -25,7 +25,7 @@ export const sourcemapsCommand = new Command('sourcemaps');
 
 const shortDescription = 'Prepares JavaScript files to support error symbolication and uploads JavaScript source maps';
 
-const detailedHelp = `For each respective command listed below under 'Commands', please run 'o11y-dem-cli sourcemaps <command> --help' for an overview of its usage and options`;
+const detailedHelp = `For each respective command listed below under 'Commands', please run 'splunk-rum sourcemaps <command> --help' for an overview of its usage and options`;
 
 const injectDescription =
 `Inject a code snippet into your JavaScript bundles to enable automatic source mapping of your application's JavaScript errors.
@@ -128,12 +128,12 @@ sourcemapsCommand
   )
   .requiredOption(
     '--realm <value>',
-    'Realm for your organization (example: us0).  Can also be set using the environment variable O11Y_REALM',
-    process.env.O11Y_REALM
+    'Realm for your organization (example: us0).  Can also be set using the environment variable SPLUNK_REALM',
+    process.env.SPLUNK_REALM
   )
   .option(
     '--token <value>',
-    'API access token.  Can also be set using the environment variable O11Y_TOKEN',
+    'API access token.  Can also be set using the environment variable SPLUNK_ACCESS_TOKEN',
   )
   .option(
     '--app-name <value>',
@@ -161,7 +161,7 @@ sourcemapsCommand
   )
   .action(
     async (options: SourcemapsUploadCliOptions) => {
-      const token = options.token || process.env.O11Y_TOKEN;
+      const token = options.token || process.env.SPLUNK_ACCESS_TOKEN;
       if (!token) {
         sourcemapsCommand.error(COMMON_ERROR_MESSAGES.TOKEN_NOT_SPECIFIED);
       } else {

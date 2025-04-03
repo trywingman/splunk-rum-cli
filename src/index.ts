@@ -22,21 +22,22 @@ import { Command } from 'commander';
 import { iOSCommand } from './commands/ios';
 import { androidCommand } from './commands/android';
 import { sourcemapsCommand } from './commands/sourcemaps';
+import * as packageJson from '../package.json';
 
 const program = new Command();
 
 const helpDescription =
-`A CLI tool for uploading and displaying of Android, iOS, and Browser symbolication files to and from Splunk O11y Cloud.
+`The Splunk RUM CLI is a tool for uploading and displaying of Android, iOS, and Browser symbolication files to and from Splunk Observability Cloud.
 
-For each respective command listed below under 'Commands', please run 'o11y-dem-cli <command>' for an overview of available subcommands and options.
+For each respective command listed below under 'Commands', please run 'splunk-rum <command>' for an overview of available subcommands and options.
 
-For subcommands like "upload" and "list" that make an API call, please ensure that the realm and token are either passed into the command as options, or set using the environment variables O11Y_REALM and O11Y_TOKEN.
+For subcommands like "upload" and "list" that make an API call, please ensure that the realm and token are either passed into the command as options, or set using the environment variables SPLUNK_REALM and SPLUNK_ACCESS_TOKEN.
 `;
 
 program
-  .version('1.0.0')
+  .version(packageJson.version)
   .description(helpDescription)
-  .name('o11y-dem-cli')
+  .name('splunk-rum')
   .usage('[command] [subcommand] [options]');
   
 program.addCommand(iOSCommand);

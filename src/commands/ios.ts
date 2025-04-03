@@ -48,7 +48,7 @@ export const iOSCommand = program.command('ios');
 
 const shortDescription = 'Upload and list iOS symbolication files (dSYMs)';
 
-const detailedHelp = `For each respective command listed below under 'Commands', please run 'o11y-dem-cli ios <command> --help' for an overview of its usage and options`;
+const detailedHelp = `For each respective command listed below under 'Commands', please run 'splunk-rum ios <command> --help' for an overview of its usage and options`;
 
 const iOSUploadDescription = `This subcommand uploads dSYMs provided as either a zip file, or a dSYM or dSYMs directory.`;
 
@@ -89,17 +89,17 @@ iOSCommand
   .requiredOption('--path <dSYMs dir or zip>', 'Path to the dSYM[s] directory or zip file.')
   .requiredOption(
     '--realm <value>',
-    'Realm for your organization (example: us0). Can also be set using the environment variable O11Y_REALM',
-    process.env.O11Y_REALM
+    'Realm for your organization (example: us0). Can also be set using the environment variable SPLUNK_REALM',
+    process.env.SPLUNK_REALM
   )
   .option(
     '--token <value>',
-    'API access token. Can also be set using the environment variable O11Y_TOKEN'
+    'API access token. Can also be set using the environment variable SPLUNK_ACCESS_TOKEN'
   )
   .option('--debug', 'Enable debug logs')
   .option('--dry-run', 'Perform a trial run with no changes made', false)
   .action(async (options: UploadCommandOptions) => {
-    const token = options.token || process.env.O11Y_TOKEN;
+    const token = options.token || process.env.SPLUNK_ACCESS_TOKEN;
     if (!token) {
       iOSCommand.error(COMMON_ERROR_MESSAGES.TOKEN_NOT_SPECIFIED);
     }
@@ -142,7 +142,7 @@ iOSCommand
 
       logger.info(`Preparing to upload dSYMs files from directory: ${dsymsPath}`);
 
-      const token = options.token || process.env.O11Y_TOKEN;
+      const token = options.token || process.env.SPLUNK_ACCESS_TOKEN;
       if (!token) {
         iOSCommand.error('Error: API access token is required.');
       }
@@ -202,15 +202,15 @@ iOSCommand
   .option('--debug', 'Enable debug logs')
   .requiredOption(
     '--realm <value>',
-    'Realm for your organization (example: us0). Can also be set using the environment variable O11Y_REALM',
-    process.env.O11Y_REALM
+    'Realm for your organization (example: us0). Can also be set using the environment variable SPLUNK_REALM',
+    process.env.SPLUNK_REALM
   )
   .option(
     '--token <value>',
-    'API access token. Can also be set using the environment variable O11Y_TOKEN'
+    'API access token. Can also be set using the environment variable SPLUNK_ACCESS_TOKEN'
   )
   .action(async (options: ListCommandOptions) => {
-    const token = options.token || process.env.O11Y_TOKEN;
+    const token = options.token || process.env.SPLUNK_ACCESS_TOKEN;
     if (!token) {
       iOSCommand.error('Error: API access token is required.');
     }

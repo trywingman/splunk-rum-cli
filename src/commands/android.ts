@@ -94,7 +94,7 @@ interface UploadAndroidWithManifestOptions {
 
 const shortDescription = 'Upload and list zipped or unzipped Proguard/R8 mapping.txt files';
 
-const detailedHelp = `For each respective command listed below under 'Commands', please run 'o11y-dem-cli android <command> --help' for an overview of its usage and options`;
+const detailedHelp = `For each respective command listed below under 'Commands', please run 'splunk-rum android <command> --help' for an overview of its usage and options`;
 
 androidCommand
   .description(shortDescription)
@@ -116,26 +116,26 @@ androidCommand
   .requiredOption('--version-code <int>', 'Version code')
   .requiredOption('--path <path>', 'Path to the mapping file')
   .requiredOption('--realm <value>',
-    'Realm for your organization (example: us0).  Can also be set using the environment variable O11Y_REALM',
-    process.env.O11Y_REALM
+    'Realm for your organization (example: us0).  Can also be set using the environment variable SPLUNK_REALM',
+    process.env.SPLUNK_REALM
   )
   .option(
     '--token <value>',
-    'API access token. Can also be set using the environment variable O11Y_TOKEN'
+    'API access token. Can also be set using the environment variable SPLUNK_ACCESS_TOKEN'
   )
   .option('--splunk-build-id <value>', 'Optional Splunk Build ID for the upload')
   .option( '--dry-run', 'Preview the file that will be uploaded')
   .option('--debug', 'Enable debug logs')
   .action(async (options: UploadAndroidOptions) => {
-    const token = options.token || process.env.O11Y_TOKEN;
+    const token = options.token || process.env.SPLUNK_ACCESS_TOKEN;
     if (!token) {
-      androidCommand.error('Error: API access token is required. Please pass it into the command as the --token option, or set using the environment variable O11Y_TOKEN');
+      androidCommand.error(COMMON_ERROR_MESSAGES.TOKEN_NOT_SPECIFIED);
     } else {
       options.token = token;
     }
 
     if (!options.realm || options.realm.trim() === '') {
-      androidCommand.error('Error: Realm is required and cannot be empty. Please pass it into the command as the --realm option, or set using the environment variable O11Y_REALM');
+      androidCommand.error(COMMON_ERROR_MESSAGES.REALM_NOT_SPECIFIED);
     }
 
     const logger = createLogger(options.debug ? LogLevel.DEBUG : LogLevel.INFO);
@@ -224,17 +224,17 @@ androidCommand
   .requiredOption('--manifest <path>', 'Path to the packaged AndroidManifest.xml file')
   .requiredOption('--path <path>', 'Path to the mapping.txt file')
   .requiredOption('--realm <value>',
-    'Realm for your organization (example: us0).  Can also be set using the environment variable O11Y_REALM',
-    process.env.O11Y_REALM
+    'Realm for your organization (example: us0).  Can also be set using the environment variable SPLUNK_REALM',
+    process.env.SPLUNK_REALM
   )
   .option(
     '--token <value>',
-    'API access token. Can also be set using the environment variable O11Y_TOKEN'
+    'API access token. Can also be set using the environment variable SPLUNK_ACCESS_TOKEN'
   )
   .option('--dry-run', 'Preview the file that will be uploaded and the parameters extracted from the AndroidManifest.xml file')
   .option('--debug', 'Enable debug logs')
   .action(async (options: UploadAndroidWithManifestOptions) => {
-    const token = options.token || process.env.O11Y_TOKEN;
+    const token = options.token || process.env.SPLUNK_ACCESS_TOKEN;
     if (!token) {
       androidCommand.error(COMMON_ERROR_MESSAGES.TOKEN_NOT_SPECIFIED);
     } else {
@@ -353,25 +353,25 @@ androidCommand
   .summary(`Retrieves list of metadata of all uploaded Proguard/R8 mapping files`)
   .requiredOption('--app-id <value>', 'Application ID')
   .requiredOption('--realm <value>',
-    'Realm for your organization (example: us0).  Can also be set using the environment variable O11Y_REALM',
-    process.env.O11Y_REALM
+    'Realm for your organization (example: us0).  Can also be set using the environment variable SPLUNK_REALM',
+    process.env.SPLUNK_REALM
   )
   .option(
     '--token <value>',
-    'API access token. Can also be set using the environment variable O11Y_TOKEN'
+    'API access token. Can also be set using the environment variable SPLUNK_ACCESS_TOKEN'
   )
   .showHelpAfterError(true)
   .description(listProguardDescription)
   .option('--debug', 
     'Enable debug logs')
   .action(async (options) => {
-    const token = options.token || process.env.O11Y_TOKEN;
+    const token = options.token || process.env.SPLUNK_ACCESS_TOKEN;
     if (!token) {
-      androidCommand.error('Error: API access token is required. Please pass it into the command as the --token option, or set using the environment variable O11Y_TOKEN');
+      androidCommand.error('Error: API access token is required. Please pass it into the command as the --token option, or set using the environment variable SPLUNK_ACCESS_TOKEN');
     }
 
     if (!options.realm || options.realm.trim() === '') {
-      androidCommand.error('Error: Realm is required and cannot be empty. Please pass it into the command as the --realm option, or set using the environment variable O11Y_REALM');
+      androidCommand.error('Error: Realm is required and cannot be empty. Please pass it into the command as the --realm option, or set using the environment variable SPLUNK_REALM');
     }
 
     const logger = createLogger(options.debug ? LogLevel.DEBUG : LogLevel.INFO);
