@@ -15,41 +15,110 @@
 */
 
 import axios from 'axios';
+import { uploadFile } from '../utils/httpUtils';
+import { TOKEN_HEADER, IOS_CONSTANTS } from '../utils/constants';
+import { generateUrl } from './iOSdSYMUtils';
 import { handleAxiosError } from '../utils/httpUtils';
-import fs from 'fs';
 import { Logger } from '../utils/logger';
 import { Spinner } from '../utils/spinner';
 import { IOSdSYMMetadata } from '../utils/metadataFormatUtils';
 import { UserFriendlyError } from '../utils/userFriendlyErrors';
+import { cleanupTemporaryZips } from './iOSdSYMUtils';
 
+
+
+// for the group of all file uploads
+interface UploadDSYMZipFilesOptions {
+  zipFiles: string[];
+  uploadPath: string;
+  realm: string;
+  token: string;
+  logger: Logger;
+  spinner: Spinner;
+}
+
+// for a single upload
 interface UploadParams {
   filePath: string;
   url: string;
   token: string;
   logger: Logger;
   spinner: Spinner;
-  TOKEN_HEADER: string;
 }
 
-export async function uploadDSYM({ filePath, url, token, logger, spinner, TOKEN_HEADER }: UploadParams): Promise<void> {
-  const fileSizeInBytes = fs.statSync(filePath).size;
-  const fileStream = fs.createReadStream(filePath);
-  const headers = {
-    'Content-Type': 'application/zip',
-    [TOKEN_HEADER]: token,
-    'Content-Length': fileSizeInBytes,
-  };
+/**
+ * Iterate over zipped files and upload them.
+ */
+export async function uploadDSYMZipFiles({
+  zipFiles,
+  uploadPath,
+  realm,
+  token,
+  logger,
+  spinner,
+}: UploadDSYMZipFilesOptions): Promise<void> {
+  const url = generateUrl({
+    apiPath: IOS_CONSTANTS.PATH_FOR_UPLOAD,
+    realm,
+  });
+  logger.info(`url: ${url}`);
+  logger.info(`Preparing to upload dSYMs files from directory: ${uploadPath}`);
+
+  let failedUploads = 0;
+
+  try {
+    for (const filePath of zipFiles) {
+      try {
+        await uploadDSYM({
+          filePath,
+          url,
+          token,
+          logger,
+          spinner,
+        });
+      } catch (error) {
+        failedUploads++;
+        if (error instanceof UserFriendlyError) {
+          logger.error(error.message);
+        } else {
+          logger.error('Unknown error during upload');
+        }
+      }
+    }
+
+    if (failedUploads > 0) {
+      throw new Error(`Upload failed for ${failedUploads} file${failedUploads !== 1 ? 's' : ''}`);
+    }
+  } finally {
+    cleanupTemporaryZips(uploadPath);
+  }
+}
+
+export async function uploadDSYM({ filePath, url, token, logger, spinner }: UploadParams): Promise<void> {
 
   spinner.start(`Uploading file: ${filePath}`);
 
   try {
-    await axios.put(url, fileStream, { headers });
+    await uploadFile({
+      url,
+      file: {
+        filePath,
+        fieldName: 'file',
+      },
+      token,
+      parameters: {},
+      onProgress: ({ progress, loaded, total }) => {
+        spinner.updateText(`Uploading ${filePath}: ${progress.toFixed(2)}% (${loaded}/${total} bytes)`);
+      },
+    });
+
     spinner.stop();
     logger.info(`Upload complete for ${filePath}`);
   } catch (error) {
     spinner.stop();
     const operationMessage = `Unable to upload ${filePath}`;
     const result = handleAxiosError(error, operationMessage, url, logger);
+
     if (result) {
       const userFriendlyMessage = `Failed to upload ${filePath}. Please check your network connection or your realm and token values, and ensure the file size does not exceed the limit.`;
       throw new UserFriendlyError(error, userFriendlyMessage);
@@ -61,10 +130,9 @@ interface ListParams {
   url: string;
   token: string;
   logger: Logger;
-  TOKEN_HEADER: string;
 }
 
-export async function listDSYMs({ url, token, logger, TOKEN_HEADER }: ListParams): Promise<IOSdSYMMetadata[]> {
+export async function listDSYMs({ url, token, logger }: ListParams): Promise<IOSdSYMMetadata[]> {
   try {
     const response = await axios.get<IOSdSYMMetadata[]>(url, {
       headers: {
@@ -72,7 +140,7 @@ export async function listDSYMs({ url, token, logger, TOKEN_HEADER }: ListParams
         [TOKEN_HEADER]: token,
       },
     });
-    return response.data; // Return the data if successful
+    return response.data;
   } catch (error) {
     const operationMessage = 'Unable to fetch the list of uploaded files.';
     const result = handleAxiosError(error, operationMessage, url, logger);

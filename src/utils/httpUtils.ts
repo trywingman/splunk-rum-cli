@@ -169,7 +169,7 @@ export const uploadFile = async ({ url, file, token, parameters, onProgress }: U
       const progress = (loaded / total) * 100;
       if (onProgress) {
         onProgress({ progress, loaded, total });
-      }    
+      }
     },
   });
 };

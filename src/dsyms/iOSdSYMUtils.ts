@@ -16,10 +16,26 @@
 
 import { tmpdir } from 'os';
 import { execSync } from 'child_process';
+import { BASE_URL_PREFIX, API_VERSION_STRING } from '../utils/constants';
 import { Logger } from '../utils/logger';
 import { join, resolve, basename, dirname } from 'path';
 import { copyFileSync, mkdtempSync, readdirSync, rmSync, statSync } from 'fs';
 import { UserFriendlyError, throwAsUserFriendlyErrnoException } from '../utils/userFriendlyErrors';
+
+/**
+ * Helper function to generate API URLs.
+ */
+export const generateUrl = ({
+  apiPath,
+  realm,
+  domain = 'signalfx.com',
+}: {
+  apiPath: string;
+  realm: string;
+  domain?: string;
+}): string => {
+  return `${BASE_URL_PREFIX}.${realm}.${domain}/${API_VERSION_STRING}/${apiPath}`;
+};
 
 /**
  * Helper functions for locating and zipping dSYMs
@@ -70,6 +86,24 @@ export function validateDSYMsPath(dsymsPath: string): string {
   }
 
   throw new UserFriendlyError(null, `Invalid input: Expected a path named 'dSYMs' or ending in '.dSYM', '.dSYMs.zip', or '.dSYM.zip'.`);
+}
+
+/**
+ * Validate the input path and prepare zipped files.
+ */
+export function prepareUploadFiles(dsymsPath: string, logger: Logger): { zipFiles: string[]; uploadPath: string } {
+  const absPath = validateDSYMsPath(dsymsPath);
+
+  // Get the list of zipped dSYM files
+  const { zipFiles, uploadPath } = getZippedDSYMs(absPath, logger);
+
+  // Log files for dry-run mode
+  if (zipFiles.length === 0) {
+    logger.info(`No files found to upload for directory: ${dsymsPath}.`);
+    throw new Error('No files to upload.');
+  }
+
+  return { zipFiles, uploadPath };
 }
 
 /**
