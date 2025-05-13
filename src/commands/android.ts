@@ -31,10 +31,11 @@ import {
 } from '../utils/constants';
 import { UserFriendlyError } from '../utils/userFriendlyErrors';
 import { createLogger, LogLevel } from '../utils/logger';
-import { fetchAndroidMappingMetadata, uploadFileAndroid } from '../utils/httpUtils';
+import { fetchAndroidMappingMetadata, uploadFile } from '../utils/httpUtils';
 import { AxiosError } from 'axios';
 import { createSpinner } from '../utils/spinner';
 import { formatAndroidMappingMetadata } from '../utils/metadataFormatUtils';
+import path from 'path';
 
 export const androidCommand = new Command('android');
 
@@ -189,11 +190,16 @@ androidCommand
     spinner.start(`Uploading Android mapping file: ${options.path}`);
 
     try {
-      await uploadFileAndroid({
+      await uploadFile({
         url: url,
         file: { filePath: options.path, fieldName: 'file' },
         token: options.token,
-        parameters: {}
+        parameters: { 
+          filename: path.basename(options.path)
+        },
+        onProgress: options.debug ? (progressData) => {
+          spinner.updateText(`Uploading: ${Math.round(progressData.progress)}%`);
+        } : undefined
       });
       spinner.stop();
       logger.info(`Upload complete`);
@@ -311,11 +317,16 @@ androidCommand
       spinner.start(`Uploading Android mapping file: ${options.path}`);
       
       try {
-        await uploadFileAndroid({
+        await uploadFile({
           url: url,
           file: { filePath: options.path, fieldName: 'file' },
           token: options.token,
-          parameters: {}
+          parameters: { 
+            filename: path.basename(options.path)
+          },
+          onProgress: options.debug ? (progressData) => {
+            spinner.updateText(`Uploading: ${Math.round(progressData.progress)}%`);
+          } : undefined
         });
         spinner.stop();
         logger.info(`Upload complete`);
