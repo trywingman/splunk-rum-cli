@@ -14,10 +14,9 @@
  * limitations under the License.
 */
 
-import axios from 'axios';
+import axios, { AxiosInstance } from 'axios';
 import fs from 'fs';
 import FormData from 'form-data';
-import { Logger } from '../utils/logger';
 import { AndroidMappingMetadata } from './metadataFormatUtils';
 
 interface FileUpload {
@@ -29,7 +28,7 @@ interface UploadOptions {
   url: string;
   file: FileUpload;
   token?: string;
-  parameters: { [key: string]: string | number }; 
+  parameters: { [key: string]: string | number };
   onProgress?: (progressInfo: { progress: number; loaded: number; total: number }) => void;
 }
 
@@ -55,43 +54,69 @@ export enum ErrorCategory {
   NetworkIssue = 'NETWORK_ISSUE',
   NoResponse = 'NO_RESPONSE',
   GeneralHttpError = 'GENERAL_HTTP_ERROR',
-  Unexpected = 'UNEXPECTED'
+  Unexpected = 'UNEXPECTED',
 }
 
-export const handleAxiosError = (
-  error: unknown,
-  operationMessage: string,
-  url: string,
-  logger: Logger
-): ErrorHandlingResult | undefined => {
-  if (axios.isAxiosError(error)) {
-    if (error.response) {
-      const { status, statusText } = error.response;
-      logger.error(`${status} ${statusText}`);
-      logger.error(error.response.data || 'No HTTP response body');
-      logger.error(operationMessage);
-      if (status === 413) {
-        return { category: ErrorCategory.RequestEntityTooLarge };
-      }
-      return { category: ErrorCategory.GeneralHttpError };
-    } else if (error.request) {
-      logger.error(`No response received from ${url}`);
-      if (error.cause instanceof Error) {
-        logger.error(error.cause.message);
-      }
-      logger.error(operationMessage);
-      return { category: ErrorCategory.NoResponse };
-    } else {
-      logger.error(`Network issue: ${error.message || 'Unknown network error'}`);
-      logger.error(operationMessage);
-      return { category: ErrorCategory.NetworkIssue };
-    }
-  } else {
-    logger.error(`Unexpected error: ${error}`);
-    logger.error(operationMessage);
-    return { category: ErrorCategory.Unexpected };
+// Helper interface for the 'data' object within error.details
+export interface DetailDataObject {
+  code?: string;
+  // Can add other known optional properties here, e.g., error?: string;
+  [key: string]: unknown;
+}
+
+export interface StandardError {
+  type: ErrorCategory;
+  message: string;
+  details?: {
+    status?: number; // http status code
+    data?: DetailDataObject | string;
+    url?: string; // url that was attempted
+  };
+  userFriendlyMessage: string;
+}
+
+export function formatCLIErrorMessage(error: StandardError): string {
+  const entryIndent = '   ';
+  const detailEntries: string[] = [];
+
+  // core technical message
+  detailEntries.push(`${entryIndent}"message": "${error.message}"`);
+
+  // attempted url if available
+  if (error.details?.url) {
+    detailEntries.push(`${entryIndent}"url": "${error.details.url}"`);
   }
-};
+
+  // http status code if available
+  if (error.details?.status !== undefined) {
+    detailEntries.push(`${entryIndent}"status": ${error.details.status}`);
+  }
+
+  // codes from error.details.data (e.g., 'ENOTFOUND') if available
+  if (error.details?.data) {
+    const data = error.details.data; // data is now DetailDataObject | string | undefined
+
+    // Check if data is an object (and not null) before trying to access properties
+    if (typeof data === 'object' && data !== null) {
+      // Safely check if 'code' property exists and is a string
+      if ('code' in data && typeof data.code === 'string') {
+        detailEntries.push(`${entryIndent}"code": "${data.code}"`);
+      }
+      // can add other fields from data if needed, e.g.:
+      // if ('someOtherField' in data && typeof data.someOtherField === 'expectedType') {
+      //   detailEntries.push(`${entryIndent}"someOtherField": "${data.someOtherField}"`);
+      // }
+    }
+    else if (typeof data === 'string') {
+      detailEntries.push(`${entryIndent}"responseData": "${data}"`);
+    }
+  }
+
+  const detailsBlockContent = detailEntries.length > 0 ? `\n${detailEntries.join(',\n')}\n` : '';
+  const detailsBlock = `details: [${detailsBlockContent}]`;
+
+  return `Error: ${error.userFriendlyMessage}\n${detailsBlock}`;
+}
 
 export const fetchAndroidMappingMetadata = async ({ url, token }: FetchAndroidMetadataOptions): Promise<AndroidMappingMetadata[]> => {
   const headers = {
@@ -116,7 +141,7 @@ export const fetchAndroidMappingMetadata = async ({ url, token }: FetchAndroidMe
 // calling method. Various errors, Error, axiosErrors and all should be handled by the caller of this method.
 // Since the API contracts with the backend are not yet determined. This is subject to change
 
-export const uploadFile = async ({ url, file, token, parameters, onProgress }: UploadOptions): Promise<void> => {
+export const uploadFile = async ({ url, file, token, parameters, onProgress }: UploadOptions, axiosInstance?: AxiosInstance): Promise<void> => {
   const formData = new FormData();
 
   formData.append(file.fieldName, fs.createReadStream(file.filePath));
@@ -127,7 +152,7 @@ export const uploadFile = async ({ url, file, token, parameters, onProgress }: U
 
   const fileSizeInBytes = fs.statSync(file.filePath).size;
 
-  await axios.put(url, formData, {
+  await (axiosInstance || axios).put(url, formData, {
     headers: {
       ...formData.getHeaders(),
       [TOKEN_HEADER]: token,

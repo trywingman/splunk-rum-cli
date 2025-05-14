@@ -32,7 +32,6 @@ interface UploadCommandOptions {
   dryRun?: boolean;
 }
 
-
 interface ListCommandOptions {
   realm: string;
   token?: string;
@@ -98,15 +97,20 @@ iOSCommand
         spinner: createSpinner(),
       });
 
-      logger.info('All files uploaded successfully.');
+      logger.info('All dSYM files uploaded successfully.');
     } catch (error) {
       if (error instanceof UserFriendlyError) {
+        // UserFriendlyError.message already contains the formatted string from formatCLIErrorMessage
         logger.error(error.message);
-        iOSCommand.error(error.message);
+        if (options.debug && error.originalError) {
+          logger.debug('Original error details:', error.originalError);
+        }
       } else {
-        logger.error('An unexpected error occurred:', error);
-        iOSCommand.error('An unexpected error occurred.');
+        logger.error(
+          error instanceof Error ? error.message : `An unexpected error occurred: ${String(error)}`
+        );
       }
+      iOSCommand.error(''); // ensure error exit code. process.exit(1) would also work.
     }
   });
 
@@ -126,33 +130,45 @@ iOSCommand
     'API access token. Can also be set using the environment variable SPLUNK_ACCESS_TOKEN'
   )
   .action(async (options: ListCommandOptions) => {
-    const token = options.token || process.env.SPLUNK_ACCESS_TOKEN;
-    if (!token) {
-      iOSCommand.error('Error: API access token is required.');
-    }
-
     const logger = createLogger(options.debug ? LogLevel.DEBUG : LogLevel.INFO);
-    logger.info('Fetching dSYM file data');
-
-    const url = generateUrl({
-      apiPath: IOS_CONSTANTS.PATH_FOR_METADATA,
-      realm: options.realm
-    });
+    logger.info('Fetching dSYM file data...');
 
     try {
+      const token = validateAndPrepareToken(options);
+      const url = generateUrl({
+        apiPath: IOS_CONSTANTS.PATH_FOR_METADATA,
+        realm: options.realm
+      });
+
       const responseData: IOSdSYMMetadata[] = await listDSYMs({
         url,
         token: token as string,
         logger,
       });
+
       logger.info(formatIOSdSYMMetadata(responseData));
+
     } catch (error) {
       if (error instanceof UserFriendlyError) {
+        // The UserFriendlyError.message is already formatted by formatCLIErrorMessage
+        // and includes both user-friendly text and technical details.
+        // logger.error will prefix this with "ERROR " and handle colors.
         logger.error(error.message);
-        iOSCommand.error(error.message);
+        if (options.debug && error.originalError) {
+          logger.debug('Original error details:', error.originalError);
+        }
       } else {
-        logger.error('Failed to fetch the list of uploaded files: An unknown error occurred.');
-        iOSCommand.error('Error occurred during the list operation.');
+        // For any other unexpected errors (e.g. non-Axios, such as in token validation)
+        logger.error('An unexpected error occurred during the iOS list command:');
+        if (error instanceof Error) {
+          logger.error(error.message);
+          if (options.debug && error.stack) {
+            logger.debug(error.stack);
+          }
+        } else {
+          logger.error(String(error)); // catchall for other error types
+        }
       }
+      iOSCommand.error(''); // Error exit. Blank message because one was already logged.
     }
   });
