@@ -20,10 +20,11 @@
     "signalfx",
     "rum"
   ],
-  "repository": "git@github.com:signalfx/splunk-rum-cli.git",
-  "homepage": "https://github.com/signalfx/splunk-rum-cli#readme",
+  "repository": "git@github.com:trywingman/splunk-rum-cli.git",
+  "homepage": "https://github.com/trywingman/splunk-rum-cli#readme",
   "publishConfig": {
-    "access": "public"
+    "registry": "https://npm.pkg.github.com/",
+    "access": "restricted"
   },
   "author": "Splunk <splunk-oss@splunk.com>",
   "license": "Apache-2.0",
