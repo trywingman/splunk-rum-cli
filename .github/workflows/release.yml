@@ -29,12 +29,12 @@ jobs:
       - name: Setup .npmrc file
         run: |
           cat << EOF > .npmrc
-          //npm.pkg.github.com/:_authToken=\${NODE_AUTH_TOKEN}
+          //npm.pkg.github.com/:_authToken=\${NPM_AUTH_TOKEN}
           @clari:registry=https://npm.pkg.github.com/
           always-auth=true
           EOF
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
 
       - name: Install dependencies
         run: npm ci
@@ -51,4 +51,4 @@ jobs:
       - name: Publish to GitHub Packages
         run: npm publish
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
