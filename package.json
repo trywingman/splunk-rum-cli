@@ -1,6 +1,6 @@
 {
-  "name": "@splunk/rum-cli",
-  "version": "0.0.1-alpha.4",
+  "name": "@clari/rum-cli",
+  "version": "0.0.2",
   "description": "Tools for handling symbol and mapping files for symbolication",
   "main": "./dist/index.js",
   "files": [
@@ -13,7 +13,9 @@
     "build:watch": "tsc --watch",
     "lint": "eslint ./src ./test",
     "lint:fix": "eslint ./src ./test --fix",
-    "test:unit": "jest"
+    "test:unit": "jest",
+    "start": "node ./dist/index.js",
+    "prepare": "npm run build"
   },
   "keywords": [
     "splunk",
