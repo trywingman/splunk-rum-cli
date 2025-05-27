@@ -28,10 +28,10 @@ jobs:
 
       - name: Setup .npmrc file
         run: |
-          cat << EOF > .npmrc
-          //npm.pkg.github.com/:_authToken=\${NPM_AUTH_TOKEN}
-          @clari:registry=https://npm.pkg.github.com/
-          always-auth=true
+          cat << EOF > "$HOME/.npmrc"
+            //npm.pkg.github.com/:_authToken=${NPM_AUTH_TOKEN}
+            @clari:registry=https://npm.pkg.github.com/
+            always-auth=true
           EOF
         env:
           NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
