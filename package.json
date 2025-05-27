@@ -1,6 +1,6 @@
 {
   "name": "@clari/rum-cli",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Tools for handling symbol and mapping files for symbolication",
   "main": "./dist/index.js",
   "files": [
